@@ -1,0 +1,135 @@
+﻿@model IEnumerable<ShortURL.Models.UrlEntry>
+@{
+    ViewData["Title"] = "URL Shortener";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-scissors me-2"></i>Create Short URL
+                </h4>
+            </div>
+            <div class="card-body">
+                @if (TempData["ShortUrl"] != null)
+                {
+                    <div class="alert alert-info">
+                        <strong>Your short URL:</strong>
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control" value="@TempData["ShortUrl"]" readonly id="shortUrlResult">
+                            <button class="btn btn-outline-primary copy-btn" type="button" onclick="copyToClipboard('@TempData["ShortUrl"]', this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                <form asp-action="CreateShortUrl" method="post">
+                    <div class="mb-3">
+                        <label for="originalUrl" class="form-label">Enter URL to shorten:</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-globe"></i>
+                            </span>
+                            <input type="url" class="form-control" id="originalUrl" name="originalUrl" 
+                                   placeholder="https://example.com/very-long-url" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-cut me-1"></i>Shorten
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Your Shortened URLs
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Short URL</th>
+                                    <th>Original URL</th>
+                                    <th>Created</th>
+                                    <th>Clicks</th>
+                                    <th>Last Accessed</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var url in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <code class="me-2">@($"{Context.Request.Scheme}://{Context.Request.Host}/{url.ShortCode}")</code>
+                                                <button class="btn btn-sm btn-outline-primary copy-btn" 
+                                                        onclick="copyToClipboard('@($"{Context.Request.Scheme}://{Context.Request.Host}/{url.ShortCode}")', this)">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="@url.OriginalUrl" target="_blank" class="text-decoration-none">
+                                                @(url.OriginalUrl.Length > 50 ? url.OriginalUrl.Substring(0, 50) + "..." : url.OriginalUrl)
+                                                <i class="fas fa-external-link-alt ms-1 small"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                @url.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@url.ClickCount</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                @(url.LastAccessed?.ToString("MMM dd, yyyy HH:mm") ?? "Never")
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <form asp-action="DeleteUrl" method="post" class="d-inline" 
+                                                  onsubmit="return confirm('Are you sure you want to delete this URL?')">
+                                                <input type="hidden" name="shortCode" value="@url.ShortCode" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <div class="card shadow">
+                <div class="card-body py-5">
+                    <i class="fas fa-link fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No URLs shortened yet</h5>
+                    <p class="text-muted">Start by entering a URL above to create your first short link!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}

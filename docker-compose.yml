@@ -1,0 +1,55 @@
+﻿version: '3.8'
+
+services:
+  urlshortener:
+    image: ghcr.io/foxscore/short:latest
+    container_name: url-shortener
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ALLOW_SIGNUP=yes
+      - VALID_SCHEMES=https,http,vcc
+      - MONGODB_CONNECTION_STRING=mongodb://mongodb:27017
+      - MONGODB_DATABASE_NAME=urlshortener
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    networks:
+      - url-shortener-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.url-shortener.rule=Host(`short.foxscore.dev`)"
+      - "traefik.http.routers.url-shortener.entrypoints=websecure"
+      - "traefik.http.routers.url-shortener.tls.certresolver=letsencrypt"
+      - "traefik.http.services.url-shortener.loadbalancer.server.port=8080"
+
+  mongodb:
+    image: mongo:7.0
+    container_name: url-shortener-mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-changeme123}
+      - MONGO_INITDB_DATABASE=urlshortener
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - url-shortener-network
+    # Uncomment if you want to access MongoDB directly
+    # ports:
+    #   - "27017:27017"
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  url-shortener-network:
+    driver: bridge
