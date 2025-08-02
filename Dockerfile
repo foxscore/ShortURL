@@ -1,10 +1,10 @@
 ﻿# Use the official .NET 8 runtime as the base image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 EXPOSE 8080
 
 # Use the .NET 8 SDK for building
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["ShortURL.csproj", "."]
 RUN dotnet restore "./ShortURL.csproj"
